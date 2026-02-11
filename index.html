@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBTC_PHIM - Xem Phim Online Miễn Phí HD</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Navigation -->
+<header class="navbar">
+    <div class="header-container">
+        <div class="logo">
+            <i class="fas fa-film"></i>
+            <span>SBTC_PHIM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="#" class="active" data-section="home">
+                <i class="fas fa-home"></i> Trang Chủ
+            </a>
+            <a href="#" data-section="trending">
+                <i class="fas fa-fire"></i> Thịnh Hành
+            </a>
+            <a href="#" data-section="new">
+                <i class="fas fa-clock"></i> Mới Cập Nhật
+            </a>
+            <a href="#" data-section="categories">
+                <i class="fas fa-th"></i> Thể Loại
+            </a>
+        </nav>
+        <div class="header-actions">
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search" placeholder="Tìm phim...">
+                <div id="search-results" class="search-dropdown"></div>
+            </div>
+            <button class="theme-toggle" id="theme-toggle" type="button" title="Chế độ tối">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+        <button class="mobile-menu-toggle" id="mobile-toggle" type="button" title="Menu di động">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+</header>
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-slider" id="hero-slider">
+        <div class="hero-slide active">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <span class="hero-badge">🔥 Đang Hot</span>
+                <h1>Khám Phá Thế Giới Điện Ảnh</h1>
+                <p>Hàng ngàn bộ phim chất lượng cao, cập nhật liên tục</p>
+                <div class="hero-buttons">
+                    <button class="btn-primary">
+                        <i class="fas fa-play"></i> Xem Ngay
+                    </button>
+                    <button class="btn-secondary">
+                        <i class="fas fa-info-circle"></i> Thông Tin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Filters -->
+<section class="quick-filters">
+    <div class="container">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">
+                <i class="fas fa-th-large"></i> Tất Cả
+            </button>
+            <button class="filter-tab" data-filter="phim-le">
+                <i class="fas fa-film"></i> Phim Lẻ
+            </button>
+            <button class="filter-tab" data-filter="phim-bo">
+                <i class="fas fa-video"></i> Phim Bộ
+            </button>
+            <button class="filter-tab" data-filter="tv-shows">
+                <i class="fas fa-tv"></i> TV Shows
+            </button>
+            <button class="filter-tab" data-filter="hoat-hinh">
+                <i class="fas fa-cat"></i> Hoạt Hình
+            </button>
+        </div>
+        <div class="filter-sort">
+            <label for="sort-select" class="sr-only">Sắp xếp phim</label>
+            <select id="sort-select">
+                <option value="latest">Mới Nhất</option>
+                <option value="year">Năm Phát Hành</option>
+                <option value="name">Tên Phim</option>
+            </select>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<main class="container">
+    
+    <!-- Featured Movies -->
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-star"></i> Phim Nổi Bật
+            </h2>
+            <a href="#" class="see-all">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div id="featured-movies" class="movie-grid"></div>
+    </section>
+
+    <!-- New Updates -->
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-clock"></i> Mới Cập Nhật
+            </h2>
+            <a href="#" class="see-all">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div id="new-movies" class="movie-grid"></div>
+    </section>
+
+    <!-- Categories Grid -->
+    <section class="section" id="categories-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-layer-group"></i> Thể Loại Phổ Biến
+            </h2>
+        </div>
+        <div class="categories-grid">
+            <div class="category-card" data-category="hanh-dong">
+                <i class="fas fa-fist-raised"></i>
+                <h3>Hành Động</h3>
+            </div>
+            <div class="category-card" data-category="hai-huoc">
+                <i class="fas fa-laugh"></i>
+                <h3>Hài Hước</h3>
+            </div>
+            <div class="category-card" data-category="tinh-cam">
+                <i class="fas fa-heart"></i>
+                <h3>Tình Cảm</h3>
+            </div>
+            <div class="category-card" data-category="kinh-di">
+                <i class="fas fa-ghost"></i>
+                <h3>Kinh Dị</h3>
+            </div>
+            <div class="category-card" data-category="phieu-luu">
+                <i class="fas fa-hiking"></i>
+                <h3>Phiêu Lưu</h3>
+            </div>
+            <div class="category-card" data-category="vien-tuong">
+                <i class="fas fa-dragon"></i>
+                <h3>Viễn Tưởng</h3>
+            </div>
+            <div class="category-card" data-category="tam-ly">
+                <i class="fas fa-brain"></i>
+                <h3>Tâm Lý</h3>
+            </div>
+            <div class="category-card" data-category="hoat-hinh">
+                <i class="fas fa-cat"></i>
+                <h3>Hoạt Hình</h3>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trending Today -->
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-fire"></i> Xu Hướng Hôm Nay
+            </h2>
+        </div>
+        <div id="trending-movies" class="movie-grid"></div>
+    </section>
+
+</main>
+
+<!-- Loading Spinner -->
+<div class="loading-spinner" id="loading">
+    <div class="spinner"></div>
+    <p>Đang tải phim...</p>
+</div>
+
+<!-- Scroll to Top -->
+<button class="scroll-top" id="scroll-top" type="button" title="Lên đầu trang">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-content">
+        <!-- Section 1: Logo + Giới thiệu + Social -->
+        <div class="footer-section footer-logo-section">
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                <span>SBTC_PHIM</span>
+            </div>
+            <p>Nền tảng xem phim trực tuyến hàng đầu Việt Nam</p>
+            <div class="social-links">
+                <a href="#" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
+                <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+            </div>
+        </div>
+
+        <!-- Section 2: Thể loại (sẽ được JS điền động) -->
+        <div class="footer-section footer-genres">
+            <h3>Thể Loại</h3>
+            <ul id="footer-genres-list">
+                <!-- JS sẽ thay thế nội dung này -->
+                <li><a href="#">Đang tải...</a></li>
+            </ul>
+        </div>
+
+        <!-- Section 3: Quốc gia (sẽ được JS điền động) -->
+        <div class="footer-section footer-countries">
+            <h3>Quốc Gia</h3>
+            <ul id="footer-countries-list">
+                <!-- JS sẽ thay thế nội dung này -->
+                <li><a href="#">Đang tải...</a></li>
+            </ul>
+        </div>
+
+        <!-- Section 4: Năm phát hành (sẽ được JS điền động) -->
+        <div class="footer-section footer-years">
+            <h3>Năm Phát Hành</h3>
+            <ul id="footer-years-list">
+                <!-- JS sẽ thay thế nội dung này -->
+                <li><a href="#">Đang tải...</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>© 2026 SBTC_PHIM. Tất cả các quyền được bảo lưu.</p>
+    </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>
