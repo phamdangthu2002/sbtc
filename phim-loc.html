@@ -1,212 +1,82 @@
 <!doctype html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kết quả lọc phim - CineHub</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-    />
-    <link rel="stylesheet" href="style.css" />
-    <!-- file CSS của bạn -->
-  </head>
-  <body>
-    <!-- Header (giống trang chủ) -->
-    <header class="navbar">
-      <div class="header-container">
-        <div class="logo">
-          <i class="fas fa-film"></i>
-          <span>CineHub</span>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kết quả lọc phim - SBTC_PHIM</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- file CSS của bạn -->
+</head>
+
+<body>
+  <!-- Header (giống trang chủ) -->
+  <header class="navbar">
+    <div class="header-container">
+      <div class="logo">
+        <i class="fas fa-film"></i>
+        <span>SBTC_PHIM</span>
+      </div>
+      <nav class="nav-links">
+        <a href="index.html"><i class="fas fa-home"></i> Trang Chủ</a>
+        <a href="#"><i class="fas fa-fire"></i> Thịnh Hành</a>
+        <a href="#"><i class="fas fa-clock"></i> Mới Cập Nhật</a>
+        <a href="#"><i class="fas fa-th"></i> Thể Loại</a>
+      </nav>
+      <div class="header-actions">
+        <div class="search-overlay" id="search-overlay"></div>
+        <div class="search-container">
+          <i class="fas fa-search"></i>
+          <button class="search-close" id="search-close">✕</button>
+          <input type="text" id="search" placeholder="Tìm phim...">
+          <div id="search-results" class="search-dropdown"></div>
         </div>
-        <nav class="nav-links">
-          <a href="index.html"><i class="fas fa-home"></i> Trang Chủ</a>
-          <a href="#"><i class="fas fa-fire"></i> Thịnh Hành</a>
-          <a href="#"><i class="fas fa-clock"></i> Mới Cập Nhật</a>
-          <a href="#"><i class="fas fa-th"></i> Thể Loại</a>
-        </nav>
-        <div class="header-actions">
-          <div class="search-container">
-            <i class="fas fa-search"></i>
-            <input type="text" id="search" placeholder="Tìm phim..." />
-            <div id="search-results" class="search-dropdown"></div>
-          </div>
-          <button
-            class="theme-toggle"
-            id="theme-toggle"
-            type="button"
-            title="Chuyển đổi chế độ tối/sáng"
-          >
-            <i class="fas fa-moon"></i>
-          </button>
-        </div>
-        <button
-          class="mobile-menu-toggle"
-          id="mobile-toggle"
-          type="button"
-          title="Mở menu di động"
-        >
+
+        <button class="theme-toggle" id="theme-toggle" type="button" title="Chế độ tối">
+          <i class="fas fa-moon"></i>
+        </button><button class="mobile-menu-toggle" id="mobile-toggle" type="button" title="Menu di động">
           <i class="fas fa-bars"></i>
         </button>
       </div>
-    </header>
-    <div class="movie-hero-content">
-      <a href="index.html" class="back-button">
-        <i class="fas fa-arrow-left"></i> Quay lại
-      </a>
     </div>
-    <!-- Main Content -->
-    <main class="container">
-      <section class="section">
-        <div class="section-header">
-          <h2 class="section-title" id="filter-title">
-            <i class="fas fa-filter"></i> Đang tải...
-          </h2>
-        </div>
-        <div id="movie-grid" class="movie-grid">
-          <!-- Phim sẽ được render bằng JS -->
-        </div>
-      </section>
-    </main>
+  </header>
+  <div class="movie-hero-content">
+    <a href="index.html" class="back-button">
+      <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+  </div>
+  <!-- Main Content -->
+  <main class="container">
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title" id="filter-title">
+          <i class="fas fa-filter"></i> Đang tải...
+        </h2>
+      </div>
+      <div id="movie-grid" class="movie-grid">
+        <!-- Phim sẽ được render bằng JS -->
+      </div>
+    </section>
+  </main>
 
-    <!-- Loading -->
-    <div class="loading-spinner" id="loading">
-      <div class="spinner"></div>
-      <p>Đang tải phim...</p>
-    </div>
+  <!-- Loading -->
+  <div class="loading-spinner" id="loading">
+    <div class="spinner"></div>
+    <p>Đang tải phim...</p>
+  </div>
 
-    <!-- Footer (giữ nguyên hoặc include footer động của bạn) -->
-    <footer class="footer">
-      <!-- Nội dung footer như bạn đã có -->
-    </footer>
+  <!-- Footer (giữ nguyên hoặc include footer động của bạn) -->
+  <footer class="footer">
+    <!-- Nội dung footer như bạn đã có -->
+  </footer>
 
-    <script src="main.js"></script>
-    <script>
-      // Script lọc phim riêng cho trang này
-      document.addEventListener("DOMContentLoaded", () => {
-        const params = new URLSearchParams(window.location.search);
-        const type = params.get("type"); // the-loai, quoc-gia, nam-phat-hanh
-        const slug = params.get("slug"); // hanh-dong, viet-nam, 2025...
+  <script src="main.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      setupSearch();
+    });
+  </script>
+</body>
 
-        if (!type || !slug) {
-          document.getElementById("filter-title").textContent =
-            "Không tìm thấy bộ lọc";
-          document.getElementById("movie-grid").innerHTML =
-            '<p style="text-align:center;padding:4rem;">Vui lòng chọn bộ lọc hợp lệ</p>';
-          return;
-        }
-
-        apiUrl = `proxy.php?url=${encodeURIComponent(`https://ophim1.com/v1/api/${type}/${slug}`)}`;
-        let title = "";
-
-        switch (type) {
-          case "the-loai":
-            apiUrl = `https://ophim1.com/v1/api/the-loai/${slug}`;
-            title = `Thể loại: ${slug.replace(/-/g, " ").toUpperCase()}`;
-            break;
-          case "quoc-gia":
-            apiUrl = `https://ophim1.com/v1/api/quoc-gia/${slug}`;
-            title = `Quốc gia: ${slug.replace(/-/g, " ").toUpperCase()}`;
-            break;
-          case "nam-phat-hanh":
-            apiUrl = `https://ophim1.com/v1/api/nam-phat-hanh/${slug}`;
-            title = `Năm phát hành: ${slug}`;
-            break;
-          default:
-            document.getElementById("filter-title").textContent =
-              "Bộ lọc không hợp lệ";
-            return;
-        }
-
-        document.getElementById("filter-title").innerHTML =
-          `<i class="fas fa-filter"></i> ${title}`;
-
-        // Hiển thị loading
-        showLoading();
-
-        // Timeout để ẩn loading nếu API không phản hồi
-        const loadingTimeout = setTimeout(() => {
-          hideLoading();
-          document.getElementById("movie-grid").innerHTML = `
-                <div style="grid-column:1/-1;text-align:center;padding:4rem;">
-                    <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--primary-color);"></i>
-                    <p>Quá thời gian chờ. Vui lòng thử lại sau.</p>
-                </div>
-            `;
-        }, 10000); // 10 giây
-
-        // Gọi API
-        fetch(apiUrl)
-          .then((res) => res.json())
-          .then((data) => {
-            clearTimeout(loadingTimeout);
-            const movies = data?.data?.items || [];
-            renderMovies(movies);
-            hideLoading();
-          })
-          .catch((err) => {
-            clearTimeout(loadingTimeout);
-            console.error("Lỗi tải phim:", err);
-            document.getElementById("movie-grid").innerHTML = `
-                <div style="grid-column:1/-1;text-align:center;padding:4rem;">
-                    <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--primary-color);"></i>
-                    <p>Lỗi khi tải dữ liệu. Vui lòng thử lại sau.</p>
-                </div>
-            `;
-            hideLoading();
-          });
-      });
-
-      // Hàm render phim (tái sử dụng từ main.js của bạn)
-      function renderMovies(movies) {
-        const container = document.getElementById("movie-grid");
-        container.innerHTML = "";
-
-        if (movies.length === 0) {
-          container.innerHTML = `
-            <div style="grid-column:1/-1;text-align:center;padding:4rem;">
-                <i class="fas fa-film" style="font-size:4rem;color:var(--text-secondary);"></i>
-                <p>Không tìm thấy phim nào trong bộ lọc này.</p>
-            </div>
-        `;
-          return;
-        }
-
-        movies.forEach((movie) => {
-          const div = document.createElement("div");
-          div.className = "movie";
-
-          const year = movie.year || "N/A";
-          const quality = movie.quality || "HD";
-          const episode = movie.episode_current || "Full";
-
-          div.innerHTML = `
-            <div class="movie-image-wrapper">
-                <img src="https://img.ophim.live/uploads/movies/${movie.poster_url || movie.thumb_url}" 
-                     alt="${movie.name}"
-                     loading="lazy"
-                     onerror="this.src='https://via.placeholder.com/200x300?text=No+Image'">
-                <div class="movie-overlay">
-                    <i class="fas fa-play-circle"></i>
-                </div>
-                <span class="movie-badge">${quality}</span>
-            </div>
-            <div class="movie-info">
-                <h3>${movie.name}</h3>
-                <div class="movie-meta">
-                    <span><i class="fas fa-star"></i> ${episode}</span>
-                    <span>${year}</span>
-                </div>
-            </div>
-        `;
-
-          div.addEventListener("click", () => {
-            window.location.href = `detail.html?slug=${movie.slug}`;
-          });
-
-          container.appendChild(div);
-        });
-      }
-    </script>
-  </body>
 </html>

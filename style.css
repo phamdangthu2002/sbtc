@@ -110,8 +110,15 @@ body {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 .nav-links {
@@ -163,7 +170,7 @@ body {
     gap: 1rem;
 }
 
-.search-container {
+/* .search-container {
     position: relative;
     width: 300px;
 }
@@ -247,7 +254,284 @@ body {
 .search-item-info p {
     font-size: 0.85rem;
     color: var(--text-secondary);
+} */
+
+
+/* ================= SEARCH CONTAINER ================= */
+
+.search-container {
+    position: relative;
+    width: 300px;
 }
+
+/* Icon search */
+.search-container i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    z-index: 2;
+}
+
+/* Input */
+.search-container input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border: 2px solid transparent;
+    border-radius: 50px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.search-container input::placeholder {
+    color: var(--text-secondary);
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 20px rgba(229, 9, 20, 0.3);
+}
+
+
+/* ================= DROPDOWN ================= */
+
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: 100%;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+}
+
+.search-dropdown.active {
+    display: block;
+}
+
+
+/* ================= SEARCH ITEM ================= */
+
+.search-item {
+    padding: 12px 15px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-item:last-child {
+    border-bottom: none;
+}
+
+.search-item:hover {
+    background: var(--hover-bg);
+    transform: translateX(3px);
+}
+
+
+/* Poster */
+.search-item img {
+    width: 50px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+
+/* Info */
+.search-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.search-item-info h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.search-item-info p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+
+/* ================= OVERLAY ================= */
+
+.search-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    z-index: 998;
+    display: none;
+}
+
+.search-overlay.active {
+    display: block;
+}
+
+
+/* ================= ACTIVE SEARCH ================= */
+
+.search-container.active {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    max-width: 90%;
+    z-index: 999;
+}
+
+.search-container.active input {
+    font-size: 1.05rem;
+    padding: 15px 20px 15px 50px;
+}
+
+.search-container.active .search-dropdown {
+    max-height: 500px;
+}
+
+
+/* ================= CLOSE BUTTON ================= */
+
+.search-close {
+    position: absolute;
+    top: 22px;
+    right: 31px;
+    background: none;
+    border: none;
+    font-weight: bold;
+    font-size: 30px;
+    color: red;
+    cursor: pointer;
+    display: none;
+    z-index: 3;
+}
+
+.search-close:hover {
+    color: var(--primary-color);
+}
+
+
+/* ================= TABLET ================= */
+
+@media (max-width: 992px) {
+
+    .search-container.active {
+        width: 80%;
+        top: 15%;
+    }
+
+    .search-item img {
+        width: 45px;
+        height: 65px;
+    }
+
+    .search-item-info h4 {
+        font-size: 0.9rem;
+    }
+}
+
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 600px) {
+
+    /* Full screen search */
+    .search-container.active {
+        top: 70px;
+        left: 17px;
+        transform: none;
+        width: 100%;
+        height: 70vh;
+        padding: 20px 15px;
+        background: var(--card-bg);
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .header-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: block;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .search-container.active i {
+        position: absolute;
+        left: 260px;
+        top: 46px;
+        transform: translateY(-50%);
+        color: var(--primary-color);
+        font-size: 30px;
+        z-index: 2;
+    }
+
+    /* Input lớn hơn */
+    .search-container.active input {
+        font-size: 1.1rem;
+        padding: 14px 16px 14px 45px;
+    }
+
+    /* Dropdown full height */
+    .search-container.active .search-dropdown {
+        position: relative;
+        top: 0;
+        max-height: calc(100vh - 110px);
+        overflow-y: auto;
+    }
+
+
+    /* Hiện nút đóng */
+    .search-container.active .search-close {
+        display: block;
+    }
+
+    /* Ẩn overlay */
+    .search-overlay {
+        display: none !important;
+    }
+
+    /* Item to hơn cho dễ bấm */
+    .search-item {
+        padding: 14px 10px;
+    }
+
+    .search-item img {
+        width: 55px;
+        height: 80px;
+    }
+
+    .search-item-info h4 {
+        font-size: 1rem;
+    }
+}
+
+
 
 .theme-toggle {
     background: var(--card-bg);
@@ -262,6 +546,7 @@ body {
     justify-content: center;
     transition: all 0.3s ease;
     font-size: 1.2rem;
+    padding: 15px;
 }
 
 .theme-toggle:hover {
@@ -271,14 +556,16 @@ body {
 
 .mobile-menu-toggle {
     display: none;
+    justify-content: center;
     background: var(--card-bg);
     border: none;
     color: var(--text-primary);
     width: 45px;
     height: 45px;
     border-radius: 8px;
+    padding: 7px;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 30px;
     transition: all 0.3s ease;
 }
 
@@ -382,6 +669,7 @@ body {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -615,8 +903,15 @@ body {
 }
 
 @keyframes playPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
 }
 
 .movie-badge {
@@ -921,7 +1216,8 @@ body {
 
 .player-wrapper {
     position: relative;
-    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    padding-bottom: 56.25%;
+    /* 16:9 aspect ratio */
     height: 0;
     overflow: hidden;
     border-radius: 12px;
@@ -1077,8 +1373,15 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .cast-grid {
@@ -1236,7 +1539,9 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ==================== SCROLL TO TOP ==================== */
