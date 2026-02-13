@@ -170,59 +170,63 @@
     </button>
 
     <!-- Footer -->
+    <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
-            <div class="footer-section">
+            <!-- Section 1: Logo + Giới thiệu + Social -->
+            <div class="footer-section footer-logo-section">
                 <div class="logo">
                     <i class="fas fa-film"></i>
                     <span>SBTC_PHIM</span>
                 </div>
                 <p>Nền tảng xem phim trực tuyến hàng đầu Việt Nam</p>
                 <div class="social-links">
-                    <a href="#" title="Facebook"><i class="fab fa-facebook"></i></a>
+                    <a href="#" title="Facebook"><i class="fab fa-facebook-f"></i></a>
                     <a href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
                     <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
                     <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
                 </div>
             </div>
-            <div class="footer-section">
-                <h3>Danh Mục</h3>
-                <ul>
-                    <li><a href="index.html">Trang Chủ</a></li>
-                    <li><a href="#">Phim Lẻ</a></li>
-                    <li><a href="#">Phim Bộ</a></li>
-                    <li><a href="#">TV Shows</a></li>
+
+            <!-- Section 2: Thể loại (sẽ được JS điền động) -->
+            <div class="footer-section footer-genres">
+                <h3>Thể Loại</h3>
+                <ul id="footer-genres-list">
+                    <!-- JS sẽ thay thế nội dung này -->
+                    <li><a href="#">Đang tải...</a></li>
                 </ul>
             </div>
-            <div class="footer-section">
-                <h3>Thông Tin</h3>
-                <ul>
-                    <li><a href="#">Về Chúng Tôi</a></li>
-                    <li><a href="#">Liên Hệ</a></li>
-                    <li><a href="#">Điều Khoản</a></li>
-                    <li><a href="#">Chính Sách</a></li>
+
+            <!-- Section 3: Quốc gia (sẽ được JS điền động) -->
+            <div class="footer-section footer-countries">
+                <h3>Quốc Gia</h3>
+                <ul id="footer-countries-list">
+                    <!-- JS sẽ thay thế nội dung này -->
+                    <li><a href="#">Đang tải...</a></li>
                 </ul>
             </div>
-            <div class="footer-section">
-                <h3>Hỗ Trợ</h3>
-                <ul>
-                    <li><a href="#">Trung Tâm Trợ Giúp</a></li>
-                    <li><a href="#">Báo Lỗi</a></li>
-                    <li><a href="#">FAQ</a></li>
+
+            <!-- Section 4: Năm phát hành (sẽ được JS điền động) -->
+            <div class="footer-section footer-years">
+                <h3>Năm Phát Hành</h3>
+                <ul id="footer-years-list">
+                    <!-- JS sẽ thay thế nội dung này -->
+                    <li><a href="#">Đang tải...</a></li>
                 </ul>
             </div>
         </div>
+
         <div class="footer-bottom">
-            <p>&copy; 2026 SBTC_PHIM. Tất cả các quyền được bảo lưu.</p>
+            <p>© 2026 SBTC_PHIM. Tất cả các quyền được bảo lưu.</p>
         </div>
     </footer>
 
     <script src="main.js"></script>
     <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      setupSearch();
-    });
-  </script>
+        document.addEventListener("DOMContentLoaded", () => {
+            setupSearch();
+        });
+    </script>
 </body>
 
 </html>
