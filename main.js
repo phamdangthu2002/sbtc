@@ -1133,7 +1133,7 @@ function renderFooterList(listId, items, basePath, nameKey = 'name', slugKey = '
 
     // Link "Xem tất cả"
     const allLi = document.createElement('li');
-    allLi.innerHTML = `<a href="phim-loc.html?type=${basePath}">Xem tất cả</a>`;
+    allLi.innerHTML = `<a href="phim-loc.html?type=${basePath}&slug=all">Xem tất cả</a>`;
     container.appendChild(allLi);
 }
 
@@ -1412,77 +1412,171 @@ function loadDynamicCategories() {
 
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
-    // const type = params.get("type"); // the-loai, quoc-gia, nam-phat-hanh
-    // const slug = params.get("slug"); // hanh-dong, viet-nam, 2025...
     const type = params.get("type")?.trim();
     const slug = params.get("slug")?.trim();
+    const filterTitleEl = document.getElementById("filter-title");
+    const movieGridEl = document.getElementById("movie-grid");
+    const paginationEl = document.getElementById("filter-pagination");
 
-    if (!type || !slug) {
-        document.getElementById("filter-title").textContent = "Không tìm thấy bộ lọc";
-        document.getElementById("movie-grid").innerHTML =
+    // Chỉ chạy logic này ở trang phim-loc
+    if (!filterTitleEl || !movieGridEl || !paginationEl) return;
+
+    if (!type) {
+        filterTitleEl.textContent = "Không tìm thấy bộ lọc";
+        movieGridEl.innerHTML =
             '<p style="text-align:center;padding:4rem;">Vui lòng chọn bộ lọc hợp lệ</p>';
+        paginationEl.innerHTML = "";
         return;
     }
 
-    apiUrl = `proxy.php?url=${encodeURIComponent(`https://ophim1.com/v1/api/${type}/${slug}`)}`;
-    let title = "";
+    let currentPage = Math.max(1, parseInt(params.get("page") || "1", 10) || 1);
+    let totalPages = 1;
 
-    switch (type) {
-        case "the-loai":
-            apiUrl = `https://ophim1.com/v1/api/the-loai/${slug}`;
-            title = `Thể loại: ${slug.replace(/-/g, " ").toUpperCase()}`;
-            break;
-        case "quoc-gia":
-            apiUrl = `https://ophim1.com/v1/api/quoc-gia/${slug}`;
-            title = `Quốc gia: ${slug.replace(/-/g, " ").toUpperCase()}`;
-            break;
-        case "nam-phat-hanh":
-            apiUrl = `https://ophim1.com/v1/api/nam-phat-hanh/${slug}`;
-            title = `Năm phát hành: ${slug}`;
-            break;
-        default:
-            document.getElementById("filter-title").textContent =
-                "Bộ lọc không hợp lệ";
-            return;
+    function buildApiUrl(page) {
+        if (!slug || slug === "all") {
+            return `https://ophim1.com/v1/api/danh-sach/phim-moi-cap-nhat?page=${page}`;
+        }
+
+        switch (type) {
+            case "the-loai":
+                return `https://ophim1.com/v1/api/the-loai/${slug}?page=${page}`;
+            case "quoc-gia":
+                return `https://ophim1.com/v1/api/quoc-gia/${slug}?page=${page}`;
+            case "nam-phat-hanh":
+                return `https://ophim1.com/v1/api/nam-phat-hanh/${slug}?page=${page}`;
+            default:
+                return "";
+        }
     }
 
-    document.getElementById("filter-title").innerHTML =
-        `<i class="fas fa-filter"></i> ${title}`;
+    function buildTitle() {
+        if (!slug || slug === "all") {
+            if (type === "the-loai") return "Tất cả phim theo thể loại";
+            if (type === "quoc-gia") return "Tất cả phim theo quốc gia";
+            if (type === "nam-phat-hanh") return "Tất cả phim theo năm phát hành";
+            return "";
+        }
 
-    // Hiển thị loading
-    showLoading();
+        if (type === "the-loai") return `Thể loại: ${slug.replace(/-/g, " ").toUpperCase()}`;
+        if (type === "quoc-gia") return `Quốc gia: ${slug.replace(/-/g, " ").toUpperCase()}`;
+        if (type === "nam-phat-hanh") return `Năm phát hành: ${slug}`;
+        return "";
+    }
 
-    // Timeout để ẩn loading nếu API không phản hồi
-    const loadingTimeout = setTimeout(() => {
-        hideLoading();
-        document.getElementById("movie-grid").innerHTML = `
+    function extractTotalPages(data, movies) {
+        const candidates = [
+            data?.data?.params?.pagination?.totalPages,
+            data?.data?.params?.pagination?.total_pages,
+            data?.data?.params?.pagination?.totalPage,
+            data?.data?.params?.pagination?.total_page
+        ];
+        for (const value of candidates) {
+            const n = Number(value);
+            if (Number.isFinite(n) && n > 0) return n;
+        }
+
+        const totalItems = Number(
+            data?.data?.params?.pagination?.totalItems ??
+            data?.data?.params?.pagination?.total_items
+        );
+        const perPage = Number(
+            data?.data?.params?.pagination?.totalItemsPerPage ??
+            data?.data?.params?.pagination?.items_per_page ??
+            movies.length
+        );
+        if (Number.isFinite(totalItems) && totalItems > 0 && Number.isFinite(perPage) && perPage > 0) {
+            return Math.max(1, Math.ceil(totalItems / perPage));
+        }
+
+        // Fallback: nếu không có metadata, chỉ cho next khi trang hiện tại có >= 24 items
+        return movies.length >= 24 ? currentPage + 1 : currentPage;
+    }
+
+    function updatePageInUrl(page) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("page", String(page));
+        history.replaceState({}, "", url);
+    }
+
+    function renderPagination() {
+        if (totalPages <= 1) {
+            paginationEl.innerHTML = "";
+            return;
+        }
+
+        const prevDisabled = currentPage <= 1 ? "disabled" : "";
+        const nextDisabled = currentPage >= totalPages ? "disabled" : "";
+
+        paginationEl.innerHTML = `
+            <button class="page-btn" data-page="${currentPage - 1}" ${prevDisabled}>Trước</button>
+            <span class="page-indicator">Trang ${currentPage} / ${totalPages}</span>
+            <button class="page-btn" data-page="${currentPage + 1}" ${nextDisabled}>Sau</button>
+        `;
+
+        paginationEl.querySelectorAll(".page-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                if (btn.disabled) return;
+                const nextPage = Number(btn.dataset.page);
+                if (!Number.isFinite(nextPage) || nextPage < 1 || nextPage > totalPages) return;
+                loadFilteredPage(nextPage);
+            });
+        });
+    }
+
+    function loadFilteredPage(page) {
+        const apiUrl = buildApiUrl(page);
+        const title = buildTitle();
+
+        if (!apiUrl || !title) {
+            filterTitleEl.textContent = "Bộ lọc không hợp lệ";
+            movieGridEl.innerHTML =
+                '<p style="text-align:center;padding:4rem;">Không thể tải bộ lọc này</p>';
+            paginationEl.innerHTML = "";
+            return;
+        }
+
+        currentPage = page;
+        filterTitleEl.innerHTML = `<i class="fas fa-filter"></i> ${title}`;
+        paginationEl.innerHTML = "";
+        showLoading();
+
+        const loadingTimeout = setTimeout(() => {
+            hideLoading();
+            movieGridEl.innerHTML = `
                 <div style="grid-column:1/-1;text-align:center;padding:4rem;">
                     <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--primary-color);"></i>
                     <p>Quá thời gian chờ. Vui lòng thử lại sau.</p>
                 </div>
             `;
-    }, 10000); // 10 giây
+        }, 10000);
 
-    // Gọi API
-    fetch(apiUrl)
-        .then((res) => res.json())
-        .then((data) => {
-            clearTimeout(loadingTimeout);
-            const movies = data?.data?.items || [];
-            renderMovies(movies);
-            hideLoading();
-        })
-        .catch((err) => {
-            clearTimeout(loadingTimeout);
-            console.error("Lỗi tải phim:", err);
-            document.getElementById("movie-grid").innerHTML = `
-                <div style="grid-column:1/-1;text-align:center;padding:4rem;">
-                    <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--primary-color);"></i>
-                    <p>Lỗi khi tải dữ liệu. Vui lòng thử lại sau.</p>
-                </div>
-            `;
-            hideLoading();
-        });
+        fetch(apiUrl)
+            .then((res) => res.json())
+            .then((data) => {
+                clearTimeout(loadingTimeout);
+                const movies = data?.data?.items || [];
+                totalPages = Math.max(1, extractTotalPages(data, movies));
+                if (currentPage > totalPages) currentPage = totalPages;
+                renderMovies(movies);
+                renderPagination();
+                updatePageInUrl(currentPage);
+                hideLoading();
+            })
+            .catch((err) => {
+                clearTimeout(loadingTimeout);
+                console.error("Lỗi tải phim:", err);
+                movieGridEl.innerHTML = `
+                    <div style="grid-column:1/-1;text-align:center;padding:4rem;">
+                        <i class="fas fa-exclamation-triangle" style="font-size:3rem;color:var(--primary-color);"></i>
+                        <p>Lỗi khi tải dữ liệu. Vui lòng thử lại sau.</p>
+                    </div>
+                `;
+                paginationEl.innerHTML = "";
+                hideLoading();
+            });
+    }
+
+    loadFilteredPage(currentPage);
 });
 
 // Hàm render phim (tái sử dụng từ main.js của bạn)

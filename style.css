@@ -844,6 +844,39 @@ body {
     gap: 1.5rem;
 }
 
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.page-btn {
+    border: 1px solid var(--primary-color);
+    background: transparent;
+    color: var(--text-primary);
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.page-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.page-indicator {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
 .movie {
     background: var(--card-bg);
     border-radius: 12px;
@@ -1808,5 +1841,10 @@ body {
     .player-fullscreen {
         width: 100%;
         justify-content: center;
+    }
+
+    .pagination-controls {
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
 }
