@@ -1,4 +1,4 @@
-// API Endpoints (đảm bảo đã có dòng này ở đầu file)
+﻿// API Endpoints (đảm bảo đã có dòng này ở đầu file)
 const API_LIST = "https://ophim1.com/v1/api/danh-sach/phim-moi-cap-nhat";
 const API_SEARCH = (query, page = 1) => `https://ophim1.com/v1/api/tim-kiem?keyword=${encodeURIComponent(query)}&page=${page}`;
 const API_DETAIL = (slug) => `https://ophim1.com/v1/api/phim/${slug}`;
@@ -8,6 +8,7 @@ let allMovies = [];
 let currentFilter = 'all';
 let currentSort = 'latest';
 let searchTimeout;
+let activeHls = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -205,7 +206,7 @@ function renderMovieGrid(container, movies) {
                 <span class="movie-badge">${quality}</span>
             </div>
             <div class="movie-info">
-                <h3>${movie.name}</h3>
+                <h3>${movie.name}. ${movie.lang ? `<p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 4px;">${movie.lang}</p>` : ''}</h3>
                 <div class="movie-meta">
                     <span class="rating">
                         <i class="fas fa-star"></i> ${movie.episode_current || 'Full'}
@@ -792,58 +793,386 @@ function displayCast(actors) {
     `).join('');
 }
 
+function normalizeEpisodeText(text = '') {
+    return text
+        .toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function getEpisodeVersionType(serverName = '') {
+    const normalizedName = normalizeEpisodeText(serverName);
+
+    if (
+        normalizedName.includes('long tieng') ||
+        normalizedName.includes('thuyet minh')
+    ) {
+        return 'dub';
+    }
+
+    if (
+        normalizedName.includes('vietsub') ||
+        normalizedName.includes('phu de') ||
+        normalizedName.includes('subtitle')
+    ) {
+        return 'sub';
+    }
+
+    return 'other';
+}
+
+function getEpisodeVersionLabel(type, fallbackName = '') {
+    if (type === 'sub') return 'Vietsub';
+    if (type === 'dub') return 'Lồng tiếng';
+    return fallbackName || 'Bản khác';
+}
+
+function extractEpisodeVersions(episodeServers = []) {
+    const versionMap = new Map();
+
+    episodeServers.forEach((server, index) => {
+        const type = getEpisodeVersionType(server?.server_name || '');
+        const key = type === 'other' ? `other_${index}` : type;
+        const serverData = Array.isArray(server?.server_data) ? server.server_data : [];
+
+        if (!versionMap.has(key)) {
+            versionMap.set(key, {
+                key,
+                label: getEpisodeVersionLabel(type, server?.server_name),
+                episodes: serverData
+            });
+            return;
+        }
+
+        const currentVersion = versionMap.get(key);
+        if (serverData.length > currentVersion.episodes.length) {
+            currentVersion.episodes = serverData;
+        }
+    });
+
+    const versionPriority = { sub: 0, dub: 1 };
+    return Array.from(versionMap.values()).sort((a, b) => {
+        const aPriority = versionPriority[a.key] ?? 2;
+        const bPriority = versionPriority[b.key] ?? 2;
+        return aPriority - bPriority;
+    });
+}
+
+function chooseDefaultEpisodeVersion(versions, movieLang = '') {
+    if (!versions || versions.length === 0) return null;
+
+    const normalizedLang = normalizeEpisodeText(movieLang);
+    const hasSub = versions.some(v => v.key === 'sub');
+    const hasDub = versions.some(v => v.key === 'dub');
+
+    if ((normalizedLang.includes('long tieng') || normalizedLang.includes('thuyet minh')) && hasDub) {
+        return 'dub';
+    }
+
+    if (normalizedLang.includes('vietsub') && hasSub) {
+        return 'sub';
+    }
+
+    if (hasSub) return 'sub';
+    if (hasDub) return 'dub';
+
+    return versions[0].key;
+}
+
+function destroyHlsInstance() {
+    if (activeHls) {
+        activeHls.destroy();
+        activeHls = null;
+    }
+}
+
+function setQualityButtonText(label = 'HD') {
+    const qualityToggle = document.getElementById('quality-toggle');
+    if (!qualityToggle) return;
+
+    qualityToggle.innerHTML = `<i class="fas fa-cog"></i> Chất lượng: ${label}`;
+}
+
+function closeQualityMenu() {
+    const qualityMenu = document.getElementById('quality-menu');
+    if (qualityMenu) {
+        qualityMenu.classList.remove('active');
+    }
+}
+
+function renderQualityMenu(options = [], onSelect) {
+    const qualityMenu = document.getElementById('quality-menu');
+    if (!qualityMenu) return;
+
+    qualityMenu.innerHTML = '';
+
+    if (!options || options.length === 0) {
+        const empty = document.createElement('button');
+        empty.type = 'button';
+        empty.className = 'quality-option active';
+        empty.textContent = 'HD';
+        empty.disabled = true;
+        qualityMenu.appendChild(empty);
+        setQualityButtonText('HD');
+        return;
+    }
+
+    const selectedOption = options.find(option => option.active) || options[0];
+    setQualityButtonText(selectedOption.label);
+
+    options.forEach(option => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `quality-option ${option.active ? 'active' : ''}`;
+        button.textContent = option.label;
+
+        button.addEventListener('click', () => {
+            if (typeof onSelect === 'function') {
+                onSelect(option.value);
+            }
+            closeQualityMenu();
+        });
+
+        qualityMenu.appendChild(button);
+    });
+}
+
+function setPlayerSource(episode) {
+    const iframe = document.getElementById("iframePlayer");
+    const video = document.getElementById("videoPlayer");
+
+    if (!iframe || !video) return;
+    if (!episode) return;
+
+    const m3u8Source = episode.link_m3u8;
+    const embedSource = episode.link_embed;
+    const canUseHlsJs = typeof Hls !== 'undefined' && Hls.isSupported();
+    const canUseNativeHls = video.canPlayType('application/vnd.apple.mpegurl');
+
+    closeQualityMenu();
+    destroyHlsInstance();
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    iframe.src = '';
+
+    if (m3u8Source && (canUseHlsJs || canUseNativeHls)) {
+        iframe.style.display = 'none';
+        video.style.display = 'block';
+
+        if (canUseHlsJs) {
+            activeHls = new Hls();
+            activeHls.loadSource(m3u8Source);
+            activeHls.attachMedia(video);
+
+            activeHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                const uniqueByHeight = new Map();
+                activeHls.levels.forEach((level, levelIndex) => {
+                    const key = `${level.height || 0}-${level.bitrate || 0}`;
+                    if (!uniqueByHeight.has(key)) {
+                        uniqueByHeight.set(key, {
+                            value: levelIndex,
+                            label: level.height ? `${level.height}p` : 'HD',
+                            bitrate: level.bitrate || 0
+                        });
+                    }
+                });
+
+                const sortedLevels = Array.from(uniqueByHeight.values())
+                    .sort((a, b) => b.bitrate - a.bitrate);
+
+                const qualityOptions = [
+                    { value: -1, label: 'Auto', active: activeHls.currentLevel === -1 },
+                    ...sortedLevels.map(level => ({
+                        value: level.value,
+                        label: level.label,
+                        active: level.value === activeHls.currentLevel
+                    }))
+                ];
+
+                const applyQualitySelection = (selectedLevel) => {
+                    const levelIndex = Number(selectedLevel);
+                    if (!Number.isFinite(levelIndex) || !activeHls) return;
+                    activeHls.currentLevel = levelIndex;
+                    renderQualityMenu(
+                        qualityOptions.map(option => ({
+                            ...option,
+                            active: option.value === levelIndex
+                        })),
+                        applyQualitySelection
+                    );
+                };
+
+                renderQualityMenu(qualityOptions, applyQualitySelection);
+            });
+
+            activeHls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
+                const level = activeHls?.levels?.[data.level];
+                if (level?.height) {
+                    setQualityButtonText(`${level.height}p`);
+                } else {
+                    setQualityButtonText(activeHls.currentLevel === -1 ? 'Auto' : 'HD');
+                }
+            });
+        } else {
+            video.src = m3u8Source;
+            renderQualityMenu([{ value: 'native', label: 'Auto', active: true }]);
+        }
+
+        video.play().catch(() => { });
+        return;
+    }
+
+    video.style.display = 'none';
+    iframe.style.display = 'block';
+    iframe.src = embedSource || '';
+    renderQualityMenu([{ value: 'embed', label: 'Auto', active: true }]);
+}
+
 function displayEpisodes(movie) {
     if (!movie.episodes || movie.episodes.length === 0) {
         document.getElementById('episodes-wrapper').style.display = 'none';
         return;
     }
 
-    const episodes = movie.episodes[0].server_data;
+    const versions = extractEpisodeVersions(movie.episodes);
     const episodesContainer = document.getElementById("episodes");
+    const versionOptionsContainer = document.getElementById('episode-version-options');
+    const iframe = document.getElementById("iframePlayer");
+    const video = document.getElementById("videoPlayer");
 
-    if (!episodesContainer) return;
+    if (!episodesContainer || (!iframe && !video)) return;
+    if (versions.length === 0) {
+        document.getElementById('episodes-wrapper').style.display = 'none';
+        return;
+    }
 
-    episodesContainer.innerHTML = "";
+    let currentVersionKey = chooseDefaultEpisodeVersion(versions, movie.lang);
+    let currentSortOrder = document.querySelector('.episodes-sort.active')?.dataset.sort || 'asc';
+    let currentEpisodeId = null;
 
-    episodes.forEach((ep, index) => {
-        const btn = document.createElement("div");
-        btn.className = "episode";
-        btn.textContent = ep.name;
+    function getCurrentVersion() {
+        return versions.find(version => version.key === currentVersionKey) || versions[0];
+    }
 
-        if (index === 0) {
-            btn.classList.add('active');
+    function getEpisodeId(episode) {
+        return episode?.slug || episode?.filename || episode?.name;
+    }
+
+    function playEpisode(episode) {
+        if (!episode) return;
+        setPlayerSource(episode);
+        currentEpisodeId = getEpisodeId(episode);
+    }
+
+    function renderEpisodeList() {
+        const version = getCurrentVersion();
+        const episodes = [...(version?.episodes || [])];
+
+        episodesContainer.innerHTML = "";
+
+        if (episodes.length === 0) {
+            episodesContainer.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 1rem;">
+                    Chưa có tập cho bản này.
+                </div>
+            `;
+            destroyHlsInstance();
+            if (video) {
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+                video.style.display = 'none';
+            }
+            if (iframe) {
+                iframe.src = '';
+                iframe.style.display = 'block';
+            }
+            return;
         }
 
-        btn.addEventListener('click', function () {
-            document.querySelectorAll('.episode').forEach(e => e.classList.remove('active'));
-            this.classList.add('active');
+        if (currentSortOrder === 'desc') {
+            episodes.reverse();
+        }
 
-            const iframe = document.getElementById("iframePlayer");
-            if (iframe) {
-                iframe.src = ep.link_embed;
+        let selectedEpisode = null;
+        episodes.forEach((ep, index) => {
+            const btn = document.createElement("div");
+            const episodeId = getEpisodeId(ep);
+            btn.className = "episode";
+            btn.textContent = ep.name;
 
-                // Scroll to player
+            if (
+                (currentEpisodeId && currentEpisodeId === episodeId) ||
+                (!currentEpisodeId && index === 0)
+            ) {
+                btn.classList.add('active');
+                selectedEpisode = ep;
+            }
+
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.episode').forEach(e => e.classList.remove('active'));
+                this.classList.add('active');
+                playEpisode(ep);
+
                 document.getElementById('player-section').scrollIntoView({
                     behavior: 'smooth',
                     block: 'center'
                 });
-            }
+            });
+
+            episodesContainer.appendChild(btn);
         });
 
-        episodesContainer.appendChild(btn);
-    });
+        if (!selectedEpisode) {
+            selectedEpisode = episodes[0];
+            const firstEpisodeElement = episodesContainer.querySelector('.episode');
+            if (firstEpisodeElement) {
+                firstEpisodeElement.classList.add('active');
+            }
+        }
 
-    // Load first episode
-    const iframe = document.getElementById("iframePlayer");
-    if (iframe && episodes.length > 0) {
-        iframe.src = episodes[0].link_embed;
+        playEpisode(selectedEpisode);
     }
 
-    // Setup episode sorting
-    setupEpisodeSort(episodes);
+    function renderVersionOptions() {
+        if (!versionOptionsContainer) return;
+
+        if (versions.length <= 1) {
+            versionOptionsContainer.innerHTML = '';
+            return;
+        }
+
+        versionOptionsContainer.innerHTML = '';
+        versions.forEach(version => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `episode-version-btn ${version.key === currentVersionKey ? 'active' : ''}`;
+            button.textContent = version.label;
+
+            button.addEventListener('click', () => {
+                if (version.key === currentVersionKey) return;
+                currentVersionKey = version.key;
+                renderVersionOptions();
+                renderEpisodeList();
+            });
+
+            versionOptionsContainer.appendChild(button);
+        });
+    }
+
+    renderVersionOptions();
+    renderEpisodeList();
+
+    setupEpisodeSort((sortOrder) => {
+        currentSortOrder = sortOrder;
+        renderEpisodeList();
+    });
 }
 
-function setupEpisodeSort(episodes) {
+function setupEpisodeSort(onSortChange) {
     const sortButtons = document.querySelectorAll('.episodes-sort');
 
     sortButtons.forEach(btn => {
@@ -852,15 +1181,9 @@ function setupEpisodeSort(episodes) {
             this.classList.add('active');
 
             const sortOrder = this.dataset.sort;
-            const episodesContainer = document.getElementById("episodes");
-            const episodeElements = Array.from(episodesContainer.children);
-
-            if (sortOrder === 'desc') {
-                episodeElements.reverse();
+            if (typeof onSortChange === 'function') {
+                onSortChange(sortOrder);
             }
-
-            episodesContainer.innerHTML = '';
-            episodeElements.forEach(el => episodesContainer.appendChild(el));
         });
     });
 }
@@ -906,11 +1229,12 @@ function setupTabs() {
 // ==================== PLAYER CONTROLS ====================
 function setupPlayerControls() {
     const fullscreenBtn = document.getElementById('fullscreen-toggle');
-    const iframe = document.getElementById('iframePlayer');
+    const playerWrapper = document.querySelector('.player-wrapper');
+    const qualityToggle = document.getElementById('quality-toggle');
+    const qualityMenu = document.getElementById('quality-menu');
 
-    if (fullscreenBtn && iframe) {
+    if (fullscreenBtn && playerWrapper) {
         fullscreenBtn.addEventListener('click', () => {
-            const playerWrapper = iframe.parentElement;
             if (playerWrapper.requestFullscreen) {
                 playerWrapper.requestFullscreen();
             } else if (playerWrapper.webkitRequestFullscreen) {
@@ -918,6 +1242,21 @@ function setupPlayerControls() {
             } else if (playerWrapper.msRequestFullscreen) {
                 playerWrapper.msRequestFullscreen();
             }
+        });
+    }
+
+    if (qualityToggle && qualityMenu) {
+        qualityToggle.addEventListener('click', (event) => {
+            event.stopPropagation();
+            qualityMenu.classList.toggle('active');
+        });
+
+        qualityMenu.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        document.addEventListener('click', () => {
+            closeQualityMenu();
         });
     }
 
@@ -1614,9 +1953,11 @@ function renderMovies(movies) {
                 <span class="movie-badge">${quality}</span>
             </div>
             <div class="movie-info">
-                <h3>${movie.name}</h3>
+                <h3>${movie.name}. ${movie.lang ? `<p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 4px;">${movie.lang}</p>` : ''}</h3>
                 <div class="movie-meta">
-                    <span><i class="fas fa-star"></i> ${episode}</span>
+                    <span class="rating">
+                        <i class="fas fa-star"></i> ${movie.episode_current || 'Full'}
+                    </span>
                     <span>${year}</span>
                 </div>
             </div>

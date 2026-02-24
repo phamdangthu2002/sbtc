@@ -1225,6 +1225,7 @@ body {
 .player-controls {
     display: flex;
     gap: 10px;
+    position: relative;
 }
 
 .player-quality,
@@ -1247,6 +1248,41 @@ body {
     background: var(--primary-color);
 }
 
+.player-quality-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 140px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    padding: 8px;
+    display: none;
+    z-index: 20;
+}
+
+.player-quality-menu.active {
+    display: block;
+}
+
+.quality-option {
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.quality-option:hover,
+.quality-option.active {
+    background: var(--hover-bg);
+}
+
 .player-wrapper {
     position: relative;
     padding-bottom: 56.25%;
@@ -1257,13 +1293,19 @@ body {
     background: #000;
 }
 
-.player-wrapper iframe {
+.player-wrapper iframe,
+.player-wrapper video {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     border: none;
+}
+
+.player-wrapper video {
+    display: none;
+    background: #000;
 }
 
 /* ==================== EPISODES SECTION ==================== */
@@ -1280,6 +1322,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    gap: 1rem;
 }
 
 .episodes-header h3 {
@@ -1287,6 +1330,38 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.episodes-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.episode-version-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.episode-version-btn {
+    padding: 8px 14px;
+    background: transparent;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.episode-version-btn:hover,
+.episode-version-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
 }
 
 .episodes-filter {
@@ -1840,6 +1915,28 @@ body {
     .player-quality,
     .player-fullscreen {
         width: 100%;
+        justify-content: center;
+    }
+
+    .player-quality-menu {
+        position: static;
+        width: 100%;
+    }
+
+    .episodes-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .episodes-tools,
+    .episodes-filter,
+    .episode-version-options {
+        width: 100%;
+    }
+
+    .episode-version-btn,
+    .episodes-sort {
+        flex: 1;
         justify-content: center;
     }
 
